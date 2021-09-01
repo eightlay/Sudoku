@@ -7,9 +7,11 @@ int main()
 
 	char puzzle_path[] = "C:/Coding/Documents/Projects/Sudoku/Sudoku/data/sudoku0";
 	
-	sudoku.read_field(puzzle_path);
+	sudoku.read_puzzle(puzzle_path);
 
-	sudoku.print_field();
+	sudoku.print_puzzle();
+	SudokuSolver::solve(&sudoku, "recursion");
+	sudoku.print_puzzle();
 
 	return 0;
 }
