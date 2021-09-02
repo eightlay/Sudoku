@@ -40,7 +40,10 @@ void Sudoku::read_puzzle(char* path)
 
 	while (sudoku >> digit)
 	{
-		puzzle[position / ROWS][position % ROWS] = std::atoi(&digit);
+		char val = std::atoi(&digit);
+		val = (val == 0) ? 9 : val - 1;
+
+		puzzle[position / ROWS][position % ROWS] = val;
 		position++;
 	}
 
@@ -57,8 +60,8 @@ void Sudoku::print_puzzle()
 		{
 			if (j % 3 == 0) cout << "| ";
 
-			if (puzzle[i][j] == 0) cout << "  ";
-			else cout << +puzzle[i][j] << " ";
+			if (puzzle[i][j] == DIGITS) cout << "  ";
+			else cout << +puzzle[i][j] + 1 << " ";
 
 		}
 

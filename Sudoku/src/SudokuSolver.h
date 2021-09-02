@@ -16,12 +16,29 @@ public:
 	// Recursion solve
 	static bool recursion_solve(Sudoku* sudoku);
 
-	// Count digits in all rows, cols and blocks
-	void count_digits(Sudoku* sudoku);
+	// Constraint solve
+	static void constraint_solve(Sudoku* sudoku);
 
 private:
-	// Sudoku is friend class
-	friend class Sudoku;
+	// Helper function for constraint solve
+	static void init_domains(
+		Sudoku* sudoku, bool domain[Sudoku::ROWS][Sudoku::COLS][Sudoku::DIGITS], char cell_counter[Sudoku::ROWS][Sudoku::COLS],
+		char row_counter[Sudoku::ROWS], char col_counter[Sudoku::COLS], char block_counter[Sudoku::BLOCKS]
+	);
+
+	static void reduce_domains(
+		bool domain[Sudoku::ROWS][Sudoku::COLS][Sudoku::DIGITS], char cell_counter[Sudoku::ROWS][Sudoku::COLS],
+		char row_counter[Sudoku::ROWS], char col_counter[Sudoku::COLS], char block_counter[Sudoku::BLOCKS],
+		size_t x, size_t y, char val
+	);
+
+	static void simplify_domains(
+		Sudoku* sudoku, bool domain[Sudoku::ROWS][Sudoku::COLS][Sudoku::DIGITS], char cell_counter[Sudoku::ROWS][Sudoku::COLS],
+		char row_counter[Sudoku::ROWS], char col_counter[Sudoku::COLS], char block_counter[Sudoku::BLOCKS]
+	);
+
+	// Almost full row/col/block size
+	static const size_t AlmostFull = 8;
 
 	// Block and digit to index (BDTI)
 	static constexpr std::pair<unsigned char, unsigned char> BDTI[Sudoku::ROWS][Sudoku::COLS] = {

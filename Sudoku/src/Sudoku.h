@@ -20,7 +20,7 @@ public:
 
 	// Set cell's value by index
 	void set(size_t i, size_t j, char val);
-
+	
 	// Dimensions
 	static const size_t ROWS = 9;
 	static const size_t COLS = 9;
@@ -29,6 +29,7 @@ public:
 	static const size_t CELLS = 81;
 
 private:
+	
 	// Sudoku unsolved field
 	unsigned char** puzzle;
 };
