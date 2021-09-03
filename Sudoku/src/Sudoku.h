@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 class Sudoku
 {
 public:
@@ -10,10 +12,13 @@ public:
 	~Sudoku();
 
 	// Read field from path
-	void read_puzzle(char* path);
+	void read(char* path);
+
+	// Puzzle to string
+	std::string to_string();
 
 	// Print field
-	void print_puzzle();
+	void print();
 
 	// Get cell's value by index
 	char get(size_t i, size_t j);

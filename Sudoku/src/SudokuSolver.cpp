@@ -109,8 +109,8 @@ void SudokuSolver::init_solver_vars(SolverVars* vars)
 
 				for (size_t k = 0; k < Sudoku::DIGITS; k++)
 				{
-					vars->domain[k][j][val] = false;
 					vars->domain[i][k][val] = false;
+					vars->domain[k][j][val] = false;
 					vars->domain[BDTI[block][k].first][BDTI[block][k].second][val] = false;
 				}
 			}
@@ -125,7 +125,7 @@ void SudokuSolver::init_solver_vars(SolverVars* vars)
 			for (size_t v = 0; v < Sudoku::DIGITS; v++)
 			{
 				if (!vars->domain[i][j][v])
-				{ 
+				{
 					// Update cells', rows', columns' and blocks' domains counters
 					vars->cell_counter[i][j]++;
 					vars->row_domain_counter[i][v]++;
@@ -177,7 +177,7 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 		{
 			vars->row_domain_counter[k][val] = fmin(++vars->row_domain_counter[k][val], Sudoku::DIGITS);
 		}
-		
+
 		// Increase intersected columns' domains counters
 		if (vars->domain[x][k][val])
 		{
@@ -187,6 +187,7 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 		// Delete its value from intersected row and column
 		vars->domain[k][y][val] = false;
 		vars->domain[x][k][val] = false;
+		vars->domain[BDTI[block][k].first][BDTI[block][k].second][val] = false;
 	}
 
 	// Increase own counters
@@ -218,6 +219,10 @@ bool SudokuSolver::naked_single(SolverVars* vars, size_t anchor)
 					vars->sudoku->set(anchor, p, d);
 					reduce(vars, anchor, p, d);
 
+					vars->actions.push_back(Action(
+						"naked single", { anchor, p }, d, vars->sudoku->to_string()
+					));
+
 					flag = true;
 				}
 			}
@@ -244,6 +249,10 @@ bool SudokuSolver::full_house(SolverVars* vars, size_t anchor)
 					vars->sudoku->set(anchor, j, d);
 					reduce(vars, anchor, j, d);
 
+					vars->actions.push_back(Action(
+						"full house in row", { anchor, j }, d, vars->sudoku->to_string()
+					));
+
 					flag = true;
 				}
 			}
@@ -262,6 +271,10 @@ bool SudokuSolver::full_house(SolverVars* vars, size_t anchor)
 					vars->domain[i][anchor][d] = false;
 					vars->sudoku->set(i, anchor, d);
 					reduce(vars, i, anchor, d);
+
+					vars->actions.push_back(Action(
+						"full house in column", { i, anchor }, d, vars->sudoku->to_string()
+					));
 
 					flag = true;
 				}
@@ -284,6 +297,10 @@ bool SudokuSolver::full_house(SolverVars* vars, size_t anchor)
 					vars->domain[x][y][d] = false;
 					vars->sudoku->set(x, y, d);
 					reduce(vars, x, y, d);
+
+					vars->actions.push_back(Action(
+						"full house in block", { x, y }, d, vars->sudoku->to_string()
+					));
 
 					flag = true;
 				}
@@ -311,6 +328,64 @@ bool SudokuSolver::hidden_single(SolverVars* vars, size_t anchor)
 					vars->sudoku->set(anchor, j, d);
 					reduce(vars, anchor, j, d);
 
+					vars->actions.push_back(Action(
+						"hidden single in row", { anchor, j }, d, vars->sudoku->to_string()
+					));
+
+					flag = true;
+
+					break;
+				}
+			}
+		}
+	}
+
+	// Column
+	for (size_t d = 0; d < Sudoku::DIGITS; d++)
+	{
+		if (vars->col_domain_counter[anchor][d] == AlmostFull)
+		{
+			for (size_t i = 0; i < Sudoku::ROWS; i++)
+			{
+				if (vars->domain[i][anchor][d])
+				{
+					vars->domain[i][anchor][d] = false;
+					vars->sudoku->set(i, anchor, d);
+					reduce(vars, i, anchor, d);
+
+					vars->actions.push_back(Action(
+						"hidden single in column", { i, anchor }, d, vars->sudoku->to_string()
+					));
+
+					flag = true;
+
+					break;
+				}
+			}
+		}
+	}
+
+	// TODO: fix
+	// Block
+	for (size_t d = 0; d < Sudoku::DIGITS; d++)
+	{
+		if (vars->block_domain_counter[anchor][d] == AlmostFull)
+		{
+			for (size_t k = 0; k < Sudoku::DIGITS; k++)
+			{
+				const size_t x = BDTI[anchor][k].first;
+				const size_t y = BDTI[anchor][k].second;
+
+				if (vars->domain[x][y][d])
+				{
+					vars->domain[x][y][d] = false;
+					vars->sudoku->set(x, y, d);
+					reduce(vars, x, y, d);
+
+					vars->actions.push_back(Action(
+						"hidden single in block", { x, y }, d, vars->sudoku->to_string()
+					));
+
 					flag = true;
 
 					break;
@@ -332,15 +407,18 @@ void SudokuSolver::simplify(SolverVars* vars)
 
 		for (size_t k = 0; k < Sudoku::DIGITS; k++)
 		{
+			if (vars->actions.size() == 16)
+			{
+				flag = flag;
+			}
 			flag |= naked_single(vars, k);
 			flag |= full_house(vars, k);
 			flag |= hidden_single(vars, k);
 		}
-	
 	}
 }
 
-void SudokuSolver::constraint_solve(Sudoku* sudoku)
+ActionList SudokuSolver::constraint_solve(Sudoku* sudoku)
 {
 	// Domains and counters
 	SolverVars vars;
@@ -351,6 +429,8 @@ void SudokuSolver::constraint_solve(Sudoku* sudoku)
 
 	// Simplify
 	simplify(&vars);
+
+	return vars.actions;
 }
 
 #pragma endregion CONSTRAINT SOLVE

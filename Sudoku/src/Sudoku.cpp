@@ -3,8 +3,6 @@
 #include <fstream>
 #include <iostream>
 
-using std::cout;
-
 Sudoku::Sudoku()
 {
 	puzzle = new unsigned char* [ROWS];
@@ -30,7 +28,7 @@ Sudoku::~Sudoku()
 	delete[] puzzle;
 }
 
-void Sudoku::read_puzzle(char* path)
+void Sudoku::read(char* path)
 {
 	std::ifstream sudoku;
 	sudoku.open(path);
@@ -50,24 +48,49 @@ void Sudoku::read_puzzle(char* path)
 	sudoku.close();
 }
 
-void Sudoku::print_puzzle()
+std::string Sudoku::to_string()
 {
-	cout << "\n|-----------------------|\n";
+	std::string result = "    1 2 3   4 5 6   7 8 9\n";
+	result += "  |-----------------------|\n";
 
 	for (size_t i = 0; i < ROWS; i++)
 	{
 		for (size_t j = 0; j < COLS; j++)
 		{
-			if (j % 3 == 0) cout << "| ";
+			if (j % 3 == 0)
+			{
+				if (j / 3 == 0)
+				{
+					result += std::to_string(i + 1) + " ";
+				}
 
-			if (puzzle[i][j] == DIGITS) cout << "  ";
-			else cout << +puzzle[i][j] + 1 << " ";
+				result += "| ";
+			}
 
+			if (puzzle[i][j] == DIGITS)
+			{
+				result += "  ";
+			}
+			else
+			{
+				result += std::to_string(puzzle[i][j] + 1);
+				result += " ";
+			}
 		}
 
-		cout << "| \n";
-		if ((i + 1) % 3 == 0) cout << "|-----------------------|\n";
+		result += "| \n";
+		if ((i + 1) % 3 == 0)
+		{
+			result += "  |-----------------------|\n";
+		}
 	}
+
+	return result;
+}
+
+void Sudoku::print()
+{
+	std::cout << std::endl << to_string() << std::endl;
 }
 
 char Sudoku::get(size_t i, size_t j)

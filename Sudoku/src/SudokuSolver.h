@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Sudoku.h"
+#include "Action.h"
 
 #include <string>
 
@@ -31,6 +32,9 @@ struct SolverVars
 
 	// Impossible digits in cells of the block counter
 	unsigned char block_domain_counter[Sudoku::BLOCKS][Sudoku::DIGITS];
+
+	// Actions to solve puzzle
+	ActionList actions;
 };
 
 class SudokuSolver
@@ -43,7 +47,7 @@ public:
 	static bool recursion_solve(Sudoku* sudoku);
 
 	// Constraint solve
-	static void constraint_solve(Sudoku* sudoku);
+	static ActionList constraint_solve(Sudoku* sudoku);
 
 private:
 #pragma region Recursion solve helper functions
