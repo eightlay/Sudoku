@@ -12,6 +12,8 @@ void SudokuSolver::solve(Sudoku* sudoku, std::string method)
 	}
 }
 
+#pragma region RECURSION SOLVE
+
 bool SudokuSolver::check_possibility(Sudoku* sudoku, size_t i, size_t j, unsigned char n)
 {
 	for (size_t y = 0; y < Sudoku::COLS; y++)
@@ -53,24 +55,44 @@ bool SudokuSolver::recursion_solve(Sudoku* sudoku)
 	return true;
 }
 
+#pragma endregion RECURSION SOLVE
+
+#pragma region CONSTRAINT SOLVE
+
 void SudokuSolver::init_solver_vars(SolverVars* vars)
 {
-	// Initial values for domains and counters
+	// Ensure counters' values are zeros
+	for (size_t k = 0; k < Sudoku::DIGITS; k++)
+	{
+		// Row and column
+		vars->row_counter[k] = 0;
+		vars->col_counter[k] = 0;
+
+		for (size_t p = 0; p < Sudoku::DIGITS; p++)
+		{
+			// Cell and block
+			vars->cell_counter[k][p] = 0;
+			vars->block_counter[ITB[k][p]] = 0;
+
+			// Row, column and block domains counters
+			vars->row_domain_counter[p][k] = 0;
+			vars->col_domain_counter[p][k] = 0;
+			vars->block_domain_counter[p][k] = 0;
+		}
+	}
+
+	// Initial values for domains
 	for (size_t i = 0; i < Sudoku::ROWS; i++)
 	{
 		for (size_t j = 0; j < Sudoku::COLS; j++)
 		{
+			// True means that cells's value is assigned
 			const bool val = vars->sudoku->get(i, j) == Sudoku::DIGITS;
 
 			for (size_t k = 0; k < Sudoku::DIGITS; k++)
 			{
 				vars->domain[i][j][k] = val;
 			}
-
-			vars->cell_counter[i][j] = 0;
-			vars->row_counter[i] == 0;
-			vars->col_counter[j] == 0;
-			vars->block_counter[ITB[i][j]] == 0;
 		}
 	}
 
@@ -95,16 +117,24 @@ void SudokuSolver::init_solver_vars(SolverVars* vars)
 		}
 	}
 
-	// Count domains' size for cell
+	// Update counters to initial puzzle values
 	for (size_t i = 0; i < Sudoku::ROWS; i++)
 	{
 		for (size_t j = 0; j < Sudoku::COLS; j++)
 		{
-			for (size_t k = 0; k < Sudoku::DIGITS; k++)
+			for (size_t v = 0; v < Sudoku::DIGITS; v++)
 			{
-				vars->cell_counter[i][j] += !vars->domain[i][j][k];
+				if (!vars->domain[i][j][v])
+				{
+					// Update cells', rows', columns' and blocks' domains counters
+					vars->cell_counter[i][j]++;
+					vars->row_domain_counter[i][v]++;
+					vars->col_domain_counter[j][v]++;
+					vars->block_domain_counter[ITB[i][j]][v]++;
+				}
 			}
 
+			// Update rows', columns' and blocks' counters
 			const char val = vars->sudoku->get(i, j) != Sudoku::DIGITS;
 
 			vars->row_counter[i] += val;
@@ -116,25 +146,44 @@ void SudokuSolver::init_solver_vars(SolverVars* vars)
 
 void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 {
+	// Index to block
+	const char block = ITB[x][y];
+
 	for (size_t k = 0; k < Sudoku::DIGITS; k++)
 	{
 		// Clear domain of new assigned cell
 		vars->domain[x][y][k] = false;
 
-		// Decrease cells' counters
+		// Increase intersected cells' counters
 		vars->cell_counter[k][y] += vars->domain[k][y][val];
 		vars->cell_counter[x][k] += vars->domain[x][k][val];
 
-		// Delete its value from row and column
+		// Delete its value from intersected row and column
 		vars->domain[k][y][val] = false;
 		vars->domain[x][k][val] = false;
+
+		// Increase intersected rows' and columns' domains counters
+		vars->row_domain_counter[k][val]++;
+		vars->col_domain_counter[k][val]++;
+
+		// Increase intersected blocks' domains counters
+
+		for (size_t p = 0; p < Neightbours; p++)
+		{
+			vars->block_domain_counter[BNB[block][p]][val]++;
+		}
 	}
 
-	// Decrease counters
+	// Increase own counters
 	vars->cell_counter[x][y]++;
 	vars->row_counter[x]++;
 	vars->col_counter[y]++;
-	vars->block_counter[ITB[x][y]]++;
+	vars->block_counter[block]++;
+
+	// Set own domains counters to max
+	vars->row_domain_counter[x][val] = Sudoku::DIGITS;
+	vars->col_domain_counter[y][val] = Sudoku::DIGITS;
+	vars->block_domain_counter[block][val] = Sudoku::DIGITS;
 }
 
 void SudokuSolver::simplify(SolverVars* vars)
@@ -241,3 +290,6 @@ void SudokuSolver::constraint_solve(Sudoku* sudoku)
 	// Simplify
 	simplify(&vars);
 }
+
+#pragma endregion CONSTRAINT SOLVE
+

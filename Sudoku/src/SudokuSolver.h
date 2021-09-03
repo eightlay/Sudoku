@@ -7,12 +7,30 @@
 struct SolverVars
 {
 	Sudoku* sudoku;
+	
+	// Cells' domains
 	bool domain[Sudoku::ROWS][Sudoku::COLS][Sudoku::DIGITS];
+
+	// Cells' domain sizes
 	char cell_counter[Sudoku::ROWS][Sudoku::COLS];
 
+	// Assigned cells in row counter
 	char row_counter[Sudoku::ROWS];
+
+	// Assigned cells in column counter
 	char col_counter[Sudoku::COLS];
+
+	// Assigned cells in block counter
 	char block_counter[Sudoku::BLOCKS];
+
+	// Impossible digits in cells of the row counter
+	char row_domain_counter[Sudoku::ROWS][Sudoku::DIGITS];
+
+	// Impossible digits in cells of the column counter
+	char col_domain_counter[Sudoku::COLS][Sudoku::DIGITS];
+
+	// Impossible digits in cells of the block counter
+	char block_domain_counter[Sudoku::BLOCKS][Sudoku::DIGITS];
 };
 
 class SudokuSolver
@@ -41,7 +59,10 @@ private:
 	// Almost full row/col/block size
 	static const size_t AlmostFull = 8;
 
-	// Block and digit to index (BDTI)
+	// Amount of neighbours of each block
+	static const size_t Neightbours = 4;
+
+	// Block and digit to index
 	static constexpr std::pair<unsigned char, unsigned char> BDTI[Sudoku::ROWS][Sudoku::COLS] = {
 		{{0, 0}, {0, 1}, {0, 2}, {1, 0}, {1, 1}, {1, 2}, {2, 0}, {2, 1}, {2, 2}},
 		{{0, 3}, {0, 4}, {0, 5}, {1, 3}, {1, 4}, {1, 5}, {2, 3}, {2, 4}, {2, 5}},
@@ -54,7 +75,7 @@ private:
 		{{6, 6}, {6, 7}, {6, 8}, {7, 6}, {7, 7}, {7, 8}, {8, 6}, {8, 7}, {8, 8}}
 	};
 
-	// Row and column to block (ITB)
+	// Index to block (ITB)
 	static constexpr unsigned char ITB[Sudoku::ROWS][Sudoku::COLS] = {
 		{0, 0, 0, 1, 1, 1, 2, 2, 2},
 		{0, 0, 0, 1, 1, 1, 2, 2, 2},
@@ -65,5 +86,18 @@ private:
 		{6, 6, 6, 7, 7, 7, 8, 8, 8},
 		{6, 6, 6, 7, 7, 7, 8, 8, 8},
 		{6, 6, 6, 7, 7, 7, 8, 8, 8}
+	};
+
+	// Blocks' neighbour blocks
+	static constexpr unsigned char BNB[Sudoku::BLOCKS][Neightbours] = {
+		{1, 2, 3, 6},
+		{0, 2, 4, 7},
+		{0, 1, 5, 8},
+		{4, 5, 0, 6},
+		{3, 5, 1, 7},
+		{3, 4, 2, 8},
+		{7, 8, 0, 3},
+		{6, 8, 1, 4},
+		{6, 7, 2, 5}
 	};
 };

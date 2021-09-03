@@ -5,7 +5,7 @@ int main()
 {
 	Sudoku sudoku;
 
-	char puzzle_path[] = "C:/Coding/Documents/Projects/Sudoku/Sudoku/data/sudoku0";
+	char puzzle_path[] = "C:/Coding/Documents/Projects/Sudoku/Sudoku/data/sudoku1";
 	
 	sudoku.read_puzzle(puzzle_path);
 
@@ -13,7 +13,7 @@ int main()
 	SudokuSolver::solve(&sudoku, "constraint");
 	sudoku.print_puzzle();
 
-	char puzzle_path1[] = "C:/Coding/Documents/Projects/Sudoku/Sudoku/data/sudoku1";
+	char puzzle_path1[] = "C:/Coding/Documents/Projects/Sudoku/Sudoku/data/sudoku0s";
 
 	sudoku.read_puzzle(puzzle_path1);
 
