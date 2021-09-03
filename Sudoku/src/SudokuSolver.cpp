@@ -125,7 +125,7 @@ void SudokuSolver::init_solver_vars(SolverVars* vars)
 			for (size_t v = 0; v < Sudoku::DIGITS; v++)
 			{
 				if (!vars->domain[i][j][v])
-				{
+				{ 
 					// Update cells', rows', columns' and blocks' domains counters
 					vars->cell_counter[i][j]++;
 					vars->row_domain_counter[i][v]++;
@@ -149,6 +149,20 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 	// Index to block
 	const char block = ITB[x][y];
 
+	// Increase intersected blocks' domains counters
+	for (size_t p = 0; p < Neightbours; p++)
+	{
+		const char neighbour = BNB[block][p];
+
+		for (size_t d = 0; d < Sudoku::DIGITS; d++)
+		{
+			if (vars->domain[BDTI[neighbour][d].first][BDTI[neighbour][d].second][val])
+			{
+				vars->block_domain_counter[neighbour][val] = fmin(++vars->block_domain_counter[neighbour][val], Sudoku::DIGITS);
+			}
+		}
+	}
+
 	for (size_t k = 0; k < Sudoku::DIGITS; k++)
 	{
 		// Clear domain of new assigned cell
@@ -158,20 +172,21 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 		vars->cell_counter[k][y] += vars->domain[k][y][val];
 		vars->cell_counter[x][k] += vars->domain[x][k][val];
 
+		// Increase intersected rows' domains counters
+		if (vars->domain[k][y][val])
+		{
+			vars->row_domain_counter[k][val] = fmin(++vars->row_domain_counter[k][val], Sudoku::DIGITS);
+		}
+		
+		// Increase intersected columns' domains counters
+		if (vars->domain[x][k][val])
+		{
+			vars->col_domain_counter[k][val] = fmin(++vars->col_domain_counter[k][val], Sudoku::DIGITS);;
+		}
+
 		// Delete its value from intersected row and column
 		vars->domain[k][y][val] = false;
 		vars->domain[x][k][val] = false;
-
-		// Increase intersected rows' and columns' domains counters
-		vars->row_domain_counter[k][val]++;
-		vars->col_domain_counter[k][val]++;
-
-		// Increase intersected blocks' domains counters
-
-		for (size_t p = 0; p < Neightbours; p++)
-		{
-			vars->block_domain_counter[BNB[block][p]][val]++;
-		}
 	}
 
 	// Increase own counters
@@ -186,6 +201,127 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 	vars->block_domain_counter[block][val] = Sudoku::DIGITS;
 }
 
+bool SudokuSolver::naked_single(SolverVars* vars, size_t anchor)
+{
+	bool flag = false;
+
+	// Cell
+	for (size_t p = 0; p < Sudoku::DIGITS; p++)
+	{
+		if (vars->cell_counter[anchor][p] == AlmostFull)
+		{
+			for (size_t d = 0; d < Sudoku::DIGITS; d++)
+			{
+				if (vars->domain[anchor][p][d])
+				{
+					vars->domain[anchor][p][d] = false;
+					vars->sudoku->set(anchor, p, d);
+					reduce(vars, anchor, p, d);
+
+					flag = true;
+				}
+			}
+		}
+	}
+
+	return flag;
+}
+
+bool SudokuSolver::full_house(SolverVars* vars, size_t anchor)
+{
+	bool flag = false;
+
+	// Row
+	if (vars->row_counter[anchor] == AlmostFull)
+	{
+		for (size_t j = 0; j < Sudoku::COLS; j++)
+		{
+			for (size_t d = 0; d < Sudoku::DIGITS; d++)
+			{
+				if (vars->domain[anchor][j][d])
+				{
+					vars->domain[anchor][j][d] = false;
+					vars->sudoku->set(anchor, j, d);
+					reduce(vars, anchor, j, d);
+
+					flag = true;
+				}
+			}
+		}
+	}
+
+	// Column
+	if (vars->col_counter[anchor] == AlmostFull)
+	{
+		for (size_t i = 0; i < Sudoku::ROWS; i++)
+		{
+			for (size_t d = 0; d < Sudoku::DIGITS; d++)
+			{
+				if (vars->domain[i][anchor][d])
+				{
+					vars->domain[i][anchor][d] = false;
+					vars->sudoku->set(i, anchor, d);
+					reduce(vars, i, anchor, d);
+
+					flag = true;
+				}
+			}
+		}
+	}
+
+	// Block
+	if (vars->block_counter[anchor] == AlmostFull)
+	{
+		for (size_t p = 0; p < Sudoku::DIGITS; p++)
+		{
+			const size_t x = BDTI[anchor][p].first;
+			const size_t y = BDTI[anchor][p].second;
+
+			for (size_t d = 0; d < Sudoku::DIGITS; d++)
+			{
+				if (vars->domain[x][y][d])
+				{
+					vars->domain[x][y][d] = false;
+					vars->sudoku->set(x, y, d);
+					reduce(vars, x, y, d);
+
+					flag = true;
+				}
+			}
+		}
+	}
+
+	return flag;
+}
+
+bool SudokuSolver::hidden_single(SolverVars* vars, size_t anchor)
+{
+	bool flag = false;
+
+	// Row
+	for (size_t d = 0; d < Sudoku::DIGITS; d++)
+	{
+		if (vars->row_domain_counter[anchor][d] == AlmostFull)
+		{
+			for (size_t j = 0; j < Sudoku::COLS; j++)
+			{
+				if (vars->domain[anchor][j][d])
+				{
+					vars->domain[anchor][j][d] = false;
+					vars->sudoku->set(anchor, j, d);
+					reduce(vars, anchor, j, d);
+
+					flag = true;
+
+					break;
+				}
+			}
+		}
+	}
+
+	return flag;
+}
+
 void SudokuSolver::simplify(SolverVars* vars)
 {
 	bool flag = true;
@@ -196,85 +332,11 @@ void SudokuSolver::simplify(SolverVars* vars)
 
 		for (size_t k = 0; k < Sudoku::DIGITS; k++)
 		{
-			// Cell
-			for (size_t p = 0; p < Sudoku::DIGITS; p++)
-			{
-				if (vars->cell_counter[k][p] == AlmostFull)
-				{
-					for (size_t d = 0; d < Sudoku::DIGITS; d++)
-					{
-						if (vars->domain[k][p][d])
-						{
-							vars->domain[k][p][d] = false;
-							vars->sudoku->set(k, p, d);
-							reduce(vars, k, p, d);
-
-							flag = true;
-						}
-					}
-				}
-			}
-
-			// Row
-			if (vars->row_counter[k] == AlmostFull)
-			{
-				for (size_t j = 0; j < Sudoku::COLS; j++)
-				{
-					for (size_t d = 0; d < Sudoku::DIGITS; d++)
-					{
-						if (vars->domain[k][j][d])
-						{
-							vars->domain[k][j][d] = false;
-							vars->sudoku->set(k, j, d);
-							reduce(vars, k, j, d);
-							
-							flag = true;
-						}
-					}
-				}
-			}
-
-			// Column
-			if (vars->col_counter[k] == AlmostFull)
-			{
-				for (size_t i = 0; i < Sudoku::ROWS; i++)
-				{
-					for (size_t d = 0; d < Sudoku::DIGITS; d++)
-					{
-						if (vars->domain[i][k][d])
-						{
-							vars->domain[i][k][d] = false;
-							vars->sudoku->set(i, k, d);
-							reduce(vars, i, k, d);
-
-							flag = true;
-						}
-					}
-				}
-			}
-
-			// Block
-			if (vars->block_counter[k] == AlmostFull)
-			{
-				for (size_t p = 0; p < Sudoku::DIGITS; p++)
-				{
-					const size_t x = BDTI[k][p].first;
-					const size_t y = BDTI[k][p].second;
-
-					for (size_t d = 0; d < Sudoku::DIGITS; d++)
-					{
-						if (vars->domain[x][y][d])
-						{
-							vars->domain[x][y][d] = false;
-							vars->sudoku->set(x, y, d);
-							reduce(vars, x, y, d);
-
-							flag = true;
-						}
-					}
-				}
-			}
+			flag |= naked_single(vars, k);
+			flag |= full_house(vars, k);
+			flag |= hidden_single(vars, k);
 		}
+	
 	}
 }
 

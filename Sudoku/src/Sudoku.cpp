@@ -52,7 +52,7 @@ void Sudoku::read_puzzle(char* path)
 
 void Sudoku::print_puzzle()
 {
-	cout << "|-----------------------|\n";
+	cout << "\n|-----------------------|\n";
 
 	for (size_t i = 0; i < ROWS; i++)
 	{

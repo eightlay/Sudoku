@@ -12,25 +12,25 @@ struct SolverVars
 	bool domain[Sudoku::ROWS][Sudoku::COLS][Sudoku::DIGITS];
 
 	// Cells' domain sizes
-	char cell_counter[Sudoku::ROWS][Sudoku::COLS];
+	unsigned char cell_counter[Sudoku::ROWS][Sudoku::COLS];
 
 	// Assigned cells in row counter
-	char row_counter[Sudoku::ROWS];
+	unsigned char row_counter[Sudoku::ROWS];
 
 	// Assigned cells in column counter
-	char col_counter[Sudoku::COLS];
+	unsigned char col_counter[Sudoku::COLS];
 
 	// Assigned cells in block counter
-	char block_counter[Sudoku::BLOCKS];
+	unsigned char block_counter[Sudoku::BLOCKS];
 
 	// Impossible digits in cells of the row counter
-	char row_domain_counter[Sudoku::ROWS][Sudoku::DIGITS];
+	unsigned char row_domain_counter[Sudoku::ROWS][Sudoku::DIGITS];
 
 	// Impossible digits in cells of the column counter
-	char col_domain_counter[Sudoku::COLS][Sudoku::DIGITS];
+	unsigned char col_domain_counter[Sudoku::COLS][Sudoku::DIGITS];
 
 	// Impossible digits in cells of the block counter
-	char block_domain_counter[Sudoku::BLOCKS][Sudoku::DIGITS];
+	unsigned char block_domain_counter[Sudoku::BLOCKS][Sudoku::DIGITS];
 };
 
 class SudokuSolver
@@ -40,21 +40,41 @@ public:
 	static void solve(Sudoku* sudoku, std::string method);
 
 	// Recursion solve
-	static bool check_possibility(Sudoku* sudoku, size_t i, size_t j, unsigned char n);
-
-	// Recursion solve
 	static bool recursion_solve(Sudoku* sudoku);
 
 	// Constraint solve
 	static void constraint_solve(Sudoku* sudoku);
 
 private:
-	// Helper function for constraint solve
+#pragma region Recursion solve helper functions
+
+	// Check if it is possible to assign n in cell (i, j)
+	static bool check_possibility(Sudoku* sudoku, size_t i, size_t j, unsigned char n);
+
+#pragma endregion
+
+#pragma region Helper function for constraint solve
+
+	// Initialize data for constraint solver
 	static void init_solver_vars(SolverVars* vars);
 
+	// Reduce domains after assigning val to cell (x, y)
 	static void reduce(SolverVars* vars, size_t x, size_t y, char val);
 
+	// Naked single technique
+	static bool naked_single(SolverVars* vars, size_t anchor); 
+
+	// Full house technique
+	static bool full_house(SolverVars* vars, size_t anchor); 
+
+	// Hidden single technique
+	static bool hidden_single(SolverVars* vars, size_t anchor); 
+
+	// Simplify puzzle with all available technuques
+	// while there is simplifications
 	static void simplify(SolverVars* vars);
+
+#pragma endregion
 
 	// Almost full row/col/block size
 	static const size_t AlmostFull = 8;
