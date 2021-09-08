@@ -83,8 +83,22 @@ private:
 	// Almost full row/col/block size
 	static const size_t AlmostFull = 8;
 
-	// Amount of neighbours of each block
+	// Number of neighbours of each block
 	static const size_t Neightbours = 4;
+	static const size_t DirectionNeightbours = 2;
+
+	// Number of intersected cells of block's neighbours
+	static const size_t BNIntersectedCells = 3;
+
+	// Number of directions
+	static const size_t Directions = 2;
+
+	// Vertical and horizontal codes
+	static const size_t horizontal = 0;
+	static const size_t vertical = 1;
+
+	// Number of rows and columns in block
+	static const size_t BlockLines = 3;
 
 	// Block and digit to index
 	static constexpr std::pair<unsigned char, unsigned char> BDTI[Sudoku::ROWS][Sudoku::COLS] = {
@@ -123,5 +137,11 @@ private:
 		{7, 8, 0, 3},
 		{6, 8, 1, 4},
 		{6, 7, 2, 5}
+	};
+
+	// Intersected cells of block's neighbours
+	static constexpr unsigned char BNI[Directions][BlockLines][BNIntersectedCells] = {
+		{{0, 1, 2}, {3, 4, 5}, {6, 7, 8}},
+		{{0, 3, 6}, {1, 4, 7}, {2, 5, 8}}
 	};
 };
