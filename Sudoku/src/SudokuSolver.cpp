@@ -153,7 +153,7 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 	const size_t hline = x % BlockLines;
 	const size_t vline = y % BlockLines;
 
-	// Increase intersected blocks' domains counters
+	// Increase intersected blocks' neighbour domains counters
 	for (size_t p = 0; p < DirectionNeightbours; p++)
 	{
 		const char hneighbour = BNB[block][p];
@@ -182,7 +182,6 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 		// Clear domain of new assigned cell
 		vars->domain[x][y][k] = false;
 
-		// TODO: simplify by adding check if x or y == k
 		// Increase intersected cells' counters
 		vars->cell_counter[k][y] += vars->domain[k][y][val];
 		vars->cell_counter[x][k] += vars->domain[x][k][val];
@@ -196,7 +195,13 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 		// Increase intersected columns' domains counters
 		if (vars->domain[x][k][val])
 		{
-			vars->col_domain_counter[k][val] = fmin(++vars->col_domain_counter[k][val], Sudoku::DIGITS);;
+			vars->col_domain_counter[k][val] = fmin(++vars->col_domain_counter[k][val], Sudoku::DIGITS);
+		}
+
+		// Increase intersected blocks' domains counters
+		if (vars->domain[BDTI[block][k].first][BDTI[block][k].second][val])
+		{
+			vars->block_domain_counter[block][k] = fmin(++vars->block_domain_counter[block][k], Sudoku::DIGITS);
 		}
 
 		// Delete its value from intersected row and column
@@ -215,8 +220,6 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 	vars->row_domain_counter[x][val] = Sudoku::DIGITS;
 	vars->col_domain_counter[y][val] = Sudoku::DIGITS;
 	vars->block_domain_counter[block][val] = Sudoku::DIGITS;
-
-	std::cout << +x << " " << +y << " " << +val << " " << +vars->block_domain_counter[5][0] << std::endl;
 }
 
 bool SudokuSolver::naked_single(SolverVars* vars, size_t anchor)
