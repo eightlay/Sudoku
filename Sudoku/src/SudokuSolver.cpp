@@ -179,12 +179,28 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 	// Update other domains and counters
 	for (size_t k = 0; k < Sudoku::DIGITS; k++)
 	{
+		// Block and digit to cell's index
+		const size_t tx = BDTI[block][k].first;
+		const size_t ty = BDTI[block][k].second;
+
+		// Increase row's and column's domains counters
+		if (vars->domain[x][y][k])
+		{
+			vars->row_domain_counter[x][k] = fmin(++vars->row_domain_counter[x][k], Sudoku::DIGITS);
+			vars->col_domain_counter[y][k] = fmin(++vars->col_domain_counter[y][k], Sudoku::DIGITS);
+		}
+
 		// Clear domain of new assigned cell
 		vars->domain[x][y][k] = false;
 
 		// Increase intersected cells' counters
 		vars->cell_counter[k][y] += vars->domain[k][y][val];
 		vars->cell_counter[x][k] += vars->domain[x][k][val];
+
+		if (!((tx == k && ty == y) || (tx == x && ty == k)))
+		{
+			vars->cell_counter[tx][ty] += vars->domain[tx][ty][val];
+		}
 
 		// Increase intersected rows' domains counters
 		if (vars->domain[k][y][val])
@@ -199,7 +215,7 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 		}
 
 		// Increase intersected blocks' domains counters
-		if (vars->domain[BDTI[block][k].first][BDTI[block][k].second][val])
+		if (vars->domain[tx][ty][val])
 		{
 			vars->block_domain_counter[block][k] = fmin(++vars->block_domain_counter[block][k], Sudoku::DIGITS);
 		}
@@ -207,11 +223,13 @@ void SudokuSolver::reduce(SolverVars* vars, size_t x, size_t y, char val)
 		// Delete its value from intersected row and column
 		vars->domain[k][y][val] = false;
 		vars->domain[x][k][val] = false;
-		vars->domain[BDTI[block][k].first][BDTI[block][k].second][val] = false;
+
+		// Delete its value from its block's cells
+		vars->domain[tx][ty][val] = false;
 	}
 
 	// Increase own counters
-	vars->cell_counter[x][y]++;
+	vars->cell_counter[x][y] = Sudoku::DIGITS;
 	vars->row_counter[x]++;
 	vars->col_counter[y]++;
 	vars->block_counter[block]++;

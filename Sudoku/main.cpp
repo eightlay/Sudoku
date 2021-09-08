@@ -11,7 +11,7 @@ int main()
 	Sudoku sudoku;
 
 	// Read puzzle to solve
-	char puzzle_path[] = "C:/Coding/Documents/Projects/Sudoku/Sudoku/data/sudoku0";
+	char puzzle_path[] = "C:/Coding/Documents/Projects/Sudoku/Sudoku/data/sudoku2";
 	sudoku.read(puzzle_path);
 	sudoku.print();
 
@@ -19,7 +19,7 @@ int main()
 	ActionList actions = SudokuSolver::constraint_solve(&sudoku);
 	
 	// Print manually solved puzzle to check
-	char puzzle_path1[] = "C:/Coding/Documents/Projects/Sudoku/Sudoku/data/sudoku0s";
+	char puzzle_path1[] = "C:/Coding/Documents/Projects/Sudoku/Sudoku/data/sudoku2s";
 	sudoku.read(puzzle_path1);
 	
 	// Print actions to solve puzzle if action was right

@@ -18,7 +18,7 @@ struct Action
 
 	void print(bool with_puzzle = false) const
 	{
-		std::cout << num << ") Digit " << digit + 1;
+		std::cout << num + 1 << ") Digit " << digit + 1;
 		std::cout << " set to cell (" << index.first + 1 << ", " << index.second + 1 << ")";
 		std::cout << " by technique \"" << technique << "\"." << std::endl;
 
